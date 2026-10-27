@@ -1,0 +1,54 @@
+model:
+  model_class: litellm_textbased
+  model_name: hosted_vllm/Qwen2.5-Coder-7B-Instruct
+  model_kwargs:
+    api_base: http://127.0.0.1:8000/v1
+    drop_params: true
+    temperature: 0
+    top_p: 1
+    seed: 0
+    max_retries: 0
+    num_retries: 0
+    stream: false
+    acompletion: false
+  cost_tracking: ignore_errors
+  format_error_template: |
+    The previous response contained {{ actions|length }} valid action blocks; exactly one is required.
+    mini-SWE-agent accepts only a block labeled mswea_bash_command. Reply with exactly one
+    block in this format, containing one shell command and no other code blocks:
+    ```mswea_bash_command
+    <one shell command>
+    ```
+environment:
+  timeout: 30
+  env:
+    LANG: C.UTF-8
+    LC_ALL: C.UTF-8
+    TZ: UTC
+agent:
+  system_template: |
+    You are a helpful Python coding assistant. Use only the supplied task workspace.
+    Read the task and relevant source/tests, make the smallest correct source change,
+    run the stated public tests, and do not weaken or modify tests to hide failures.
+    The Shell Action runs without an interactive terminal: do not launch nano, vim,
+    less, or other terminal UI programs. Inspect and edit files with non-interactive
+    commands, then verify the resulting file and run the stated public tests.
+    For every action, output exactly one code block labeled mswea_bash_command,
+    with one shell command inside. Use this exact format and label (not bash, sh,
+    python, or an unlabeled fence):
+    ```mswea_bash_command
+    <one shell command>
+    ```
+    Do not include any other code block in the response. Do not use sudo, install
+    packages, or access files outside the task workspace. After verifying the task,
+    submit using the exact standalone command required by mini-SWE-agent:
+    echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
+  instance_template: |
+    Please solve this task:
+    {{task}}
+  step_limit: 12
+  cost_limit: 9999
+  wall_time_limit_seconds: 150
+  max_consecutive_format_errors: 3
+  mode: yolo
+  confirm_exit: false
